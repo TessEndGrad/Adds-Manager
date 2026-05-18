@@ -6,7 +6,7 @@
   <title>Yandex Direct — Кабинет</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body class="bg-gray-50">
 
@@ -41,8 +41,7 @@
 
         <div class="flex items-center gap-3">
           <div class="text-right">
-            <div class="text-sm font-medium">Иван Иванов</div>
-            <div class="text-xs text-gray-500">ООО «Моя компания»</div>
+            <div class="text-sm font-medium" id="name">Иван Иванов</div>
           </div>
           <div class="w-9 h-9 bg-gray-300 rounded-full flex items-center justify-center text-lg cursor-pointer">👤</div>
         </div>
@@ -71,8 +70,8 @@
       <!-- Список кампаний -->
       <div class="w-2/4 bg-white border-r border-gray-200 overflow-y-auto" id="campaignList">
         <div class="p-6 border-b bg-gray-50">
-          <h1 class="text-2xl font-semibold text-gray-900">Рекламные Кампании</h1>
-          <p class="text-gray-600 text-sm mt-1">Всего: <span id="campaignCount">8</span></p>
+          <h1 class="text-2xl font-semibold text-gray-900" id="rec_header">Рекламные Кампании</h1>
+          <!-- <p class="text-gray-600 text-sm mt-1">Всего: <span id="campaignCount">8</span></p> -->
         </div>
 
         <div class="divide-y" id="mainContent">
@@ -105,6 +104,6 @@
             </div>
         </div>
     </div>
-  <script src="script.js"></script>
+  <script src="js/script.js"></script>
 </body>
 </html>

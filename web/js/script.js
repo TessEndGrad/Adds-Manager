@@ -169,8 +169,9 @@ function renderSidebar() {
 // Главная страница (дашборд)
 function renderDashboard() {
   const main = document.getElementById('mainContent');
+  const head = document.getElementById('rec_header');
+  head.innerHTML = `<h1 class="text-2xl font-semibold text-gray-900" id="rec_header">Добро пожаловать, ${currentUser.name}!</h1>`;
   main.innerHTML = `
-    <h1 class="text-3xl font-semibold mb-8">Добро пожаловать, ${currentUser.name}!</h1>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
       <div class="bg-white p-6 rounded-3xl shadow-sm">
         <h3 class="text-gray-500">Всего публикаций</h3>
@@ -190,6 +191,8 @@ function renderDashboard() {
 
 // Список публикаций
 function renderPosts(filter = currentFilter) {
+  const head = document.getElementById('rec_header');
+  head.innerHTML = `<h1 class="text-2xl font-semibold text-gray-900" id="rec_header">Рекламные Кампании</h1>`;
   const main = document.getElementById('mainContent');
   
   let filteredPosts = posts.filter(post => {
@@ -331,7 +334,8 @@ function renderModeration() {
   const moderationPosts = posts.filter(p => p.status === 'moderation');
 
   const main = document.getElementById('mainContent');
-  main.innerHTML = `<h1 class="text-3xl font-semibold mb-8">Модерация публикаций</h1>`;
+  const head = document.getElementById('rec_header');
+  head.innerHTML = `<h1 class="text-2xl font-semibold text-gray-900" id="rec_header">Модерация публикаций</h1>`;
 
   if (moderationPosts.length === 0) {
     main.innerHTML += `<p class="text-gray-500">Нет публикаций на модерации</p>`;
@@ -382,10 +386,10 @@ function loadPage(page) {
   else if (page === 'new-post') renderNewPost();
   else if (page === 'moderation') renderModeration();
   else if (page === 'calendar') {
-    document.getElementById('mainContent').innerHTML = `<h1 class="text-3xl font-semibold">Календарь публикаций (в разработке)</h1>`;
+    document.getElementById('rec_header').innerHTML = `<h1 class="text-2xl font-semibold text-gray-900" id="rec_header">Календарь публикаций (в разработке)</h1>`;
   }
   else if (page === 'tags') {
-    document.getElementById('mainContent').innerHTML = `<h1 class="text-3xl font-semibold">Управление тегами (в разработке)</h1>`;
+    document.getElementById('rec_header').innerHTML = `<h1 class="text-2xl font-semibold text-gray-900" id="rec_header">Управление тегами</h1>`;
   }
 }
 
@@ -393,6 +397,7 @@ function loadPage(page) {
 document.addEventListener('DOMContentLoaded', () => {
   if (checkAuth()) {
     renderSidebar();
-    loadPage('posts');
+    loadPage('dashboard');
+    document.getElementById("name").innerHTML = `<div class="text-sm font-medium" id="name">${currentUser.name}</div>`
   }
 });
