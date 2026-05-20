@@ -1,66 +1,5 @@
-// script.js
-let currentUser = null;
 let posts = [];
 let currentFilter = { status: 'all', tag: 'all', sort: 'date-desc' };
-
-// Хэширование пароля
-async function hashPassword(password) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(password);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-// Регистрация нового пользователя
-async function register(name, email, password) {
-  let users = JSON.parse(localStorage.getItem('users')) || [];
-
-  // Проверка, существует ли email
-  if (users.some(u => u.email === email)) {
-    alert('Пользователь с таким email уже существует');
-    return;
-  }
-
-  const passwordHash = await hashPassword(password);
-
-  const newUser = {
-    id: Date.now(),
-    name: name,
-    email: email,
-    passwordHash: passwordHash,
-    role: "user"   // по умолчанию обычный пользователь
-  };
-
-  users.push(newUser);
-  localStorage.setItem('users', JSON.stringify(users));
-
-  alert('Регистрация прошла успешно! Теперь вы можете войти.');
-  toggleForm(); // переключаем обратно на форму входа
-}
-
-// Логин
-async function login(email, password) {
-  const users = JSON.parse(localStorage.getItem('users')) || [];
-  
-  for (let user of users) {
-    const inputHash = await hashPassword(password);
-    if (user.email === email && user.passwordHash === inputHash) {
-      currentUser = { 
-        id: user.id, 
-        name: user.name, 
-        email: user.email, 
-        role: user.role 
-      };
-      
-      saveData();
-      window.location.href = 'index.html';
-      return;
-    }
-  }
-
-  alert('Неверный email или пароль');
-}
 
 // Загрузка данных
 function loadData() {
@@ -86,11 +25,6 @@ function checkAuth() {
 
   // Если пользователь НЕ авторизован
   if (!currentUser) {
-    // Если мы уже на странице логина — ничего не делаем
-    if (currentPage === 'login.html') {
-      return false;
-    }
-    // Иначе — редирект на логин
     window.location.href = 'login.html';
     return false;
   }
@@ -111,32 +45,6 @@ function checkAuth() {
 function logout() {
   localStorage.removeItem('currentUser');
   window.location.href = 'login.html';
-}
-
-// Логин (вызывается из login.html)
-function login() {
-  const email = document.getElementById('email').value.trim();
-  const password = document.getElementById('password').value.trim();
-
-  const users = [
-    { id: 1, email: "moderator@demo.ru", password: "123456", name: "Модератор", role: "moderator" },
-    { id: 2, email: "user@demo.ru", password: "123456", name: "Алексей Иванов", role: "user" }
-  ];
-
-  const user = users.find(u => u.email === email && u.password === password);
-
-  if (user) {
-    currentUser = user;
-    saveData();
-    window.location.href = 'index.html';
-  } else {
-    alert('Неверный email или пароль');
-  }
-}
-
-// Демо-регистрация
-function registerDemo() {
-  alert('В демо-версии используйте готовые аккаунты:\n\nmoderator@demo.ru / 123456\nuser@demo.ru / 123456');
 }
 
 // Рендер бокового меню в зависимости от роли
@@ -377,6 +285,165 @@ function rejectPost(id) {
   }
 }
 
+function renderCalendar() {
+  const main = document.getElementById('mainContent');
+  
+  const today = new Date();
+  const currentMonth = today.getMonth();
+  const currentYear = today.getFullYear();
+  document.getElementById('rec_header').innerHTML = `<h1 class="text-2xl font-semibold text-gray-900" id="rec_header">Календарь публикаций</h1>`;
+  let html = `
+    <div class="bg-white rounded-3xl p-8 shadow-sm">
+      <div class="flex justify-between items-center mb-6">
+        <button onclick="prevMonth()" class="text-2xl px-4 py-2 hover:bg-gray-100 rounded-xl">‹</button>
+        <h2 id="calendarTitle" class="text-2xl font-medium">Май 2026</h2>
+        <button onclick="nextMonth()" class="text-2xl px-4 py-2 hover:bg-gray-100 rounded-xl">›</button>
+      </div>
+      
+      <div class="grid grid-cols-7 gap-2 text-center text-sm font-medium text-gray-500 mb-2">
+        <div>Пн</div><div>Вт</div><div>Ср</div><div>Чт</div><div>Пт</div><div>Сб</div><div>Вс</div>
+      </div>
+      
+      <div id="calendarGrid" class="grid grid-cols-7 gap-2"></div>
+    </div>
+  `;
+
+  main.innerHTML = html;
+  renderCalendarGrid(currentMonth, currentYear);
+}
+
+// Глобальные переменные для календаря
+let calendarMonth = new Date().getMonth();
+let calendarYear = new Date().getFullYear();
+
+function renderCalendarGrid(month, year) {
+  const grid = document.getElementById('calendarGrid');
+  grid.innerHTML = '';
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  // Пустые ячейки в начале
+  for (let i = 0; i < (firstDay === 0 ? 6 : firstDay - 1); i++) {
+    grid.innerHTML += `<div class="h-24"></div>`;
+  }
+
+  // Дни месяца
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const postsOnDay = posts.filter(p => p.scheduledDate.startsWith(dateStr));
+
+    const isToday = day === new Date().getDate() && 
+                    month === new Date().getMonth() && 
+                    year === new Date().getFullYear();
+
+    let cell = `
+      <div onclick="showDayPosts('${dateStr}')" 
+           class="h-24 border border-gray-200 rounded-2xl p-2 hover:border-emerald-300 cursor-pointer transition ${isToday ? 'bg-emerald-50 border-emerald-300' : ''}">
+        <div class="font-medium ${isToday ? 'text-emerald-600' : ''}">${day}</div>
+    `;
+
+    if (postsOnDay.length > 0) {
+      cell += `<div class="text-[10px] text-emerald-600 mt-1">• ${postsOnDay.length} постов</div>`;
+    }
+
+    cell += `</div>`;
+    grid.innerHTML += cell;
+  }
+}
+
+function prevMonth() {
+  calendarMonth--;
+  if (calendarMonth < 0) {
+    calendarMonth = 11;
+    calendarYear--;
+  }
+  document.getElementById('calendarTitle').textContent = 
+    new Date(calendarYear, calendarMonth).toLocaleString('ru-RU', { month: 'long', year: 'numeric' });
+  renderCalendarGrid(calendarMonth, calendarYear);
+}
+
+function nextMonth() {
+  calendarMonth++;
+  if (calendarMonth > 11) {
+    calendarMonth = 0;
+    calendarYear++;
+  }
+  document.getElementById('calendarTitle').textContent = 
+    new Date(calendarYear, calendarMonth).toLocaleString('ru-RU', { month: 'long', year: 'numeric' });
+  renderCalendarGrid(calendarMonth, calendarYear);
+}
+
+function showDayPosts(dateStr) {
+  const dayPosts = posts.filter(p => p.scheduledDate.startsWith(dateStr));
+  
+  if (dayPosts.length === 0) {
+    alert(`На ${dateStr} нет запланированных публикаций`);
+    return;
+  }
+
+  let text = `Публикации на ${dateStr}:\n\n`;
+  dayPosts.forEach((p, i) => {
+    text += `${i+1}. ${p.title} (${p.status})\n`;
+  });
+
+  alert(text);
+}
+
+function renderTags() {
+  const main = document.getElementById('mainContent');
+
+  // Собираем все уникальные теги
+  const allTags = new Set();
+  posts.forEach(post => {
+    post.tags.forEach(tag => allTags.add(tag));
+  });
+    document.getElementById('rec_header').innerHTML = `<h1 class="text-2xl font-semibold text-gray-900" id="rec_header">Управление тегами</h1>`;
+  let html = `
+    <div class="bg-white rounded-3xl p-8">
+      <div class="flex gap-3 mb-8">
+        <input id="newTagInput" type="text" placeholder="Новый тег" 
+               class="flex-1 px-5 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:border-emerald-500">
+        <button onclick="addNewTag()" 
+                class="bg-emerald-600 text-white px-8 rounded-2xl hover:bg-emerald-700">
+          Добавить тег
+        </button>
+      </div>
+
+      <div class="flex flex-wrap gap-3" id="tagsContainer">
+        ${Array.from(allTags).map(tag => `
+          <div class="group bg-gray-100 hover:bg-gray-200 transition px-5 py-2.5 rounded-2xl flex items-center gap-2">
+            <span class="font-medium">#${tag}</span>
+            <span onclick="deleteTag('${tag}'); event.stopImmediatePropagation()" 
+                  class="hidden group-hover:inline text-red-500 cursor-pointer text-lg leading-none">×</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+
+  main.innerHTML = html;
+}
+
+function addNewTag() {
+  const input = document.getElementById('newTagInput');
+  const tag = input.value.trim().toLowerCase();
+  
+  if (!tag) return;
+
+  // Можно добавить логику сохранения популярных тегов, если нужно
+  alert(`Тег "#${tag}" добавлен! Теперь его можно использовать при создании постов.`);
+  input.value = '';
+  renderTags(); // обновляем список
+}
+
+function deleteTag(tag) {
+  if (confirm(`Удалить тег "#${tag}"?`)) {
+    // Здесь можно добавить логику удаления тега из всех постов при необходимости
+    renderTags();
+  }
+}
+
 // Переключение страниц
 function loadPage(page) {
   document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
@@ -385,12 +452,8 @@ function loadPage(page) {
   else if (page === 'posts') renderPosts();
   else if (page === 'new-post') renderNewPost();
   else if (page === 'moderation') renderModeration();
-  else if (page === 'calendar') {
-    document.getElementById('rec_header').innerHTML = `<h1 class="text-2xl font-semibold text-gray-900" id="rec_header">Календарь публикаций (в разработке)</h1>`;
-  }
-  else if (page === 'tags') {
-    document.getElementById('rec_header').innerHTML = `<h1 class="text-2xl font-semibold text-gray-900" id="rec_header">Управление тегами</h1>`;
-  }
+  else if (page === 'calendar') renderCalendar();
+  else if (page === 'tags') renderTags();
 }
 
 // Инициализация

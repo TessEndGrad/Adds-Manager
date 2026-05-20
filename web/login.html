@@ -41,43 +41,6 @@
       Демо: moderator@demo.ru / 123456
     </p>
   </div>
-  <script src="js/script.js"></script>
-  <script>
-    let isLogin = true;
-
-    function toggleForm() {
-      isLogin = !isLogin;
-      
-      document.getElementById('formTitle').textContent = isLogin ? 'Вход в систему' : 'Регистрация';
-      document.getElementById('formSubtitle').textContent = isLogin ? 'Планирование публикаций' : 'Создайте новый аккаунт';
-      document.getElementById('name').classList.toggle('hidden', isLogin);
-      document.getElementById('submitBtn').textContent = isLogin ? 'Войти' : 'Зарегистрироваться';
-      document.getElementById('toggleBtn').textContent = isLogin ? 
-        'Нет аккаунта? Зарегистрироваться' : 
-        'Уже есть аккаунт? Войти';
-    }
-
-    async function submitForm() {
-      const email = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value.trim();
-      const name = document.getElementById('name').value.trim();
-
-      if (!email || !password) {
-        alert('Заполните email и пароль');
-        return;
-      }
-
-      if (!isLogin && !name) {
-        alert('Введите ваше имя');
-        return;
-      }
-
-      if (isLogin) {
-        await login(email, password);
-      } else {
-        await register(name, email, password);
-      }
-    }
-  </script>
+  <script src="js/script_login.js"></script>
 </body>
 </html>
